@@ -3,9 +3,9 @@
         class="custom-card"
         :show="show"
         preset="card"
-        :style="{ maxWidth: '600px' }"
+        :style="{ maxWidth: '600px', margin: '48px auto' }"
         :title="title"
-        :bordered="false"
+        bordered
         @update:show="(val) => $emit('update:show', val)"
         size="huge"
         :segmented="{
@@ -13,7 +13,7 @@
             footer: 'soft'
         }"
     >
-    <template v-if="!root">
+        <template v-if="!root">
             <n-h4>Настройки триггера</n-h4>
             <n-space :item-style="{ width: '45%' }" justify="space-between">
                 <n-form-item label="Тип">
@@ -25,32 +25,47 @@
                         >{{ item.label }}</n-radio-button>
                     </n-radio-group>
                 </n-form-item>
-                <n-form-item label="Описание" required :rule="triggerDescriptionRule" >
+                <n-form-item label="Описание" required :rule="triggerDescriptionRule">
                     <n-input
                         placeholder="Введите описание"
                         v-model:value="updates.trigger.description"
                     />
                 </n-form-item>
             </n-space>
-            <n-form-item v-show="updates.trigger.type === 'button'" label="Текст кнопки" required :rule="triggerRule" >
+            <n-form-item
+                v-show="updates.trigger.type === 'button'"
+                label="Текст кнопки"
+                required
+                :rule="triggerRule"
+            >
                 <n-input placeholder="Введите описание" v-model:value="updates.trigger.text" />
             </n-form-item>
-            <n-space
-                :item-style="{ width: '45%' }"
-                justify="space-between"
-                v-show="updates.trigger.type === 'input'"
-            >
-                <n-form-item v-show="updates.trigger.type === 'input'" label="Валидация ввода">
+            <template v-if="updates.trigger.type === 'input'">
+                <n-form-item label="Валидация ввода">
                     <n-select
                         placeholder="Выберите валидацию"
                         :options="validators"
                         v-model:value="updates.trigger.validation"
                     />
                 </n-form-item>
-                <n-form-item v-show="updates.trigger.validation === 'word'" label="Теги">
-                    <n-input placeholder="Выберите валидацию" v-model:value="updates.trigger.text" />
-                </n-form-item>
-            </n-space>
+                <n-space
+                    v-show="updates.trigger.validation === 'word'"
+                    :item-style="{ width: '45%' }"
+                    justify="space-between"
+                    align="center"
+                >
+                    <n-form-item label="Текст">
+                        <n-input
+                            placeholder="Выберите текст"
+                            v-model:value="updates.trigger.matchString"
+                        />
+                    </n-form-item>
+                    <n-switch size="small" v-model:value="updates.trigger.inputNeedMatch">
+                        <template #checked>Полное совпадение</template>
+                        <template #unchecked>Частичное совпадение</template>
+                    </n-switch>
+                </n-space>
+            </template>
             <n-divider />
         </template>
         <n-h4>Настройки сообщения</n-h4>
@@ -79,7 +94,7 @@
         <n-h4>Добавить событие</n-h4>
         <n-checkbox v-model:checked="isNeedCustomEvent">Добавить событие</n-checkbox>
         <n-space
-            v-show="isNeedCustomEvent"
+            v-if="isNeedCustomEvent"
             :item-style="{ marginTop: '8px', width: '45%' }"
             justify="space-between"
         >
@@ -92,7 +107,12 @@
         </n-space>
         <template #footer>
             <n-space justify="end">
-                <n-button :loading="isLoading" @click="onChange" type="primary">Изменить</n-button>
+                <n-button
+                    :disabled="isFormInvalid"
+                    :loading="isLoading"
+                    @click="onSubmitChanges"
+                    type="primary"
+                >Изменить</n-button>
             </n-space>
         </template>
     </n-modal>
@@ -106,12 +126,13 @@
 
 <script>
 import { computed, defineComponent, ref, watch } from "vue";
-import { NFormItem, NInput, NUpload, NModal, NH4, NButton, NUploadDragger, NText, NIcon, NSpace, NDivider, NRadioGroup, NRadioButton, NSelect, NCheckbox } from "naive-ui";
+import { NFormItem, NInput, NUpload, NModal, NH4, NButton, NUploadDragger, NText, NIcon, NSpace, NDivider, NRadioGroup, NRadioButton, NSelect, NCheckbox, NSwitch } from "naive-ui";
 import { Archive as ArchiveIcon } from '@vicons/tabler'
+import { FORM_CONTENT } from "@/common/formContent";
 export default defineComponent({
     name: "BotoEditStage",
     components: {
-        NFormItem, NInput, NUpload, NModal, NButton, NUploadDragger, NText, NH4, NIcon, ArchiveIcon, NSpace, NDivider, NRadioGroup, NRadioButton, NSelect, NCheckbox
+        NFormItem, NInput, NUpload, NModal, NButton, NUploadDragger, NText, NH4, NIcon, ArchiveIcon, NSpace, NDivider, NRadioGroup, NRadioButton, NSelect, NCheckbox, NSwitch
     },
     props: {
         show: {
@@ -129,114 +150,61 @@ export default defineComponent({
     },
     emits: ["boto-stage-editor:create-stage", "update:show"],
     setup(props, { emit }) {
-        const types = ref([
-            {
-                label: 'Кнопка',
-                value: 'button'
-            },
-            {
-                label: 'Ввод',
-                value: 'input'
-            }
-        ])
-        const validators = ref([
-            {
-                label: 'Email',
-                value: 'email'
-            },
-            {
-                label: 'Телефон',
-                value: 'phone'
-            },
-            {
-                label: 'Адрес',
-                value: 'address'
-            },
-            {
-                label: 'Сумма',
-                value: 'price'
-            },
-            {
-                label: 'Возраст',
-                value: 'age'
-            },
-            {
-                label: 'Теги',
-                value: 'word'
-            }
-        ])
-        const formRef = ref(null)
+        const types = ref(FORM_CONTENT.triggerTypes)
+        const validators = ref(FORM_CONTENT.validations)
         const updates = ref({
             text: null,
             images: [],
-            trigger: {
-                type: 'button',
-                description: null,
-                text: null,
-                validation: null
-            },
-            event: {
-                label: null,
-                value: null
-            }
+            trigger: { ...FORM_CONTENT.defaults.trigger },
+            event: { ...FORM_CONTENT.defaults.event },
+        })
+        const isNeedCustomEvent = ref(false);
+
+        const isFormInvalid = computed(() => {
+            const noStageText = !updates.value.text;
+            const noTrigger = !props.root && (!updates.value.trigger.description || (updates.value.trigger.type === 'button' && !updates.value.trigger.text));
+            return Boolean(noStageText || noTrigger)
         })
 
-        const isNeedCustomEvent = ref(false);
+        watch(() => props.show, (showVal) => !showVal && cleanForm());
 
         const cleanForm = () => {
             updates.value = {
                 text: null,
-                image: [],
-                trigger: {
-                    type: null,
-                    description: null,
-                    text: null,
-                    validation: null
-                },
-                event: {
-                    label: null,
-                    value: null
-                }
+                images: [],
+                trigger: { ...FORM_CONTENT.defaults.trigger },
+                event: { ...FORM_CONTENT.defaults.event },
             };
-            isNeedCustomEvent.value = false
+            isNeedCustomEvent.value = false;
         }
 
-        watch(() => props.show, (showVal) => !showVal && cleanForm());
-        const onChange = () => {
-            if (!updates.value.text || (!props.root && (!updates.value.trigger.description || updates.value.trigger.type === 'button' && !updates.value.trigger.text))) return;
-            return emit('boto-stage-editor:create-stage', updates.value);
-        }
+        const onSubmitChanges = () => emit('boto-stage-editor:create-stage', updates.value);
+
         return {
-            formRef,
             title: computed(() => props.isNew ? 'Добавление нового шага' : 'Редактирование шага'),
             types,
             validators,
             updates,
-            onChange,
             isNeedCustomEvent,
             labelRule: {
-                required: true,
-                validator: () => Boolean(updates.value.text),
-                message: 'Текст сообщения обязателен!',
-                trigger: 'blur'
+                ...FORM_CONTENT.rules.labelRule,
+                validator: () => Boolean(updates.value.text)
             },
             triggerRule: {
-                required: true,
-                validator: () => updates.value.trigger.type === 'button' ? Boolean(updates.value.trigger.text) : true,
-                message: 'Текст триггера обязателен!',
-                trigger: 'blur'
+                ...FORM_CONTENT.rules.triggerRule,
+                validator: () => updates.value.trigger.type === 'button' ? Boolean(updates.value.trigger.text) : true
             },
             triggerDescriptionRule: {
-                required: true,
-                validator: () => Boolean(updates.value.trigger.description),
-                message: 'Описание триггера обязательно!',
-                trigger: 'blur'
+                ...FORM_CONTENT.rules.triggerDescriptionRule,
+                validator: () => Boolean(updates.value.trigger.description)
             },
             onAddFile: ({ file }) => updates.value.images.push({ id: file.id, file: file.file }),
             onRemoveFile: ({ file }) => {
                 const pos = updates.value.images.findIndex((item) => item.id === file.id)
                 updates.value.images.splice(pos, 1);
-            }
+            },
+            isFormInvalid,
+            onSubmitChanges
         }
     }
 })

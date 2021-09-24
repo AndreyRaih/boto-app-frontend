@@ -9,7 +9,7 @@
 <script>
 import { defineComponent, ref } from 'vue'
 import BotoBuilderCreateForm from '@/components/dashboard/builder/Builder.vue'
-import { stages } from '@/common/builder';
+import { stages } from '@/common/builderStages';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { ROUTER } from '@/common/constants';

@@ -13,10 +13,20 @@
                 <n-input placeholder="Введите email" v-model:value="username" />
             </n-form-item>
             <n-form-item label="Пароль">
-                <n-input placeholder="Введите пароль" type="password" show-password-toggle v-model:value="password" />
+                <n-input
+                    placeholder="Введите пароль"
+                    type="password"
+                    show-password-toggle
+                    v-model:value="password"
+                />
             </n-form-item>
             <n-form-item v-show="isRegistration" label="Повторите пароль">
-                <n-input placeholder="Повторите пароль" type="password" show-password-toggle v-model:value="confirmPassword" />
+                <n-input
+                    placeholder="Повторите пароль"
+                    type="password"
+                    show-password-toggle
+                    v-model:value="confirmPassword"
+                />
             </n-form-item>
             <div v-show="!isRegistration" :class="$style.actions">
                 <n-button :loading="loading" @click="onSignIn" type="primary">Вход</n-button>
