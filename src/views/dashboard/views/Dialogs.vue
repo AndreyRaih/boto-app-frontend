@@ -1,8 +1,10 @@
 <template>
+<div :style="{ padding: '48px' }">
     <n-h1 prefix="bar">Диалоги</n-h1>
     <n-divider />
     <boto-dialogs-table v-if="!contentIsLoading" />
     <boto-loader v-else />
+    </div>
 </template>
 
 <script>

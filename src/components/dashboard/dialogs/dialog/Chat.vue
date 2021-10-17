@@ -2,13 +2,13 @@
     <div :class="$style.container">
         <div v-for="(msg, index) in messages" :key="`chat-message-${index}`" :class="[$style.messageWrapper, msg.isBot && $style.bot]">
             <div :class="$style.title">
-                {{ msg.name }}
+                {{ msg.isBot ? 'Бот' : 'Пользователь' }}
             </div>
             <div :class="$style.message">
                 <span>{{ msg.text }}</span>
-                <span :class="$style.subtext">{{ msg.date }}</span>
+                <span :class="$style.subtext">{{ formatDate(msg.date) }}</span>
             </div>
-            <div v-if="msg.event" :class="$style.subtext" v-html="`${msg.event.name}${msg.event.payload ? `: ${msg.event.payload}` : ''}`">
+            <div v-if="msg.event && msg.event.label" :class="$style.subtext" v-html="`${msg.event.label}${msg.event.value ? `: ${msg.event.value}` : ''}`">
             </div>
         </div>
     </div>
@@ -25,6 +25,9 @@
 
 .bot {
     margin-left: auto;
+    .message {
+        background: rgba(239, 239, 245, 1);
+    }
     .message, .title, .subtext {
         align-items: end;
         text-align: right;
@@ -38,7 +41,7 @@
 }
 
 .message {
-    background: rgb(239, 239, 245);
+    background: rgba(239, 239, 245, 0.5);
     border-radius: 12px;
     padding: 8px 16px;
     display: flex;
@@ -62,6 +65,11 @@ export default defineComponent({
         messages: {
             type: Array,
             default: () => []
+        }
+    },
+    setup() {
+        return {
+            formatDate: (date) => new Date(date).toLocaleDateString()
         }
     }
 })

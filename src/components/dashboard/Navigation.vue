@@ -3,7 +3,6 @@
         default-expand-all
         :collapsed-width="64"
         :collapsed-icon-size="22"
-        :inverted="inverted"
         :options="menu"
         :value="currentRoute"
         @update:value="changeRoute"
@@ -25,10 +24,6 @@ export default defineComponent({
             type: Array,
             required: true,
             default: () => []
-        },
-        inverted: {
-            type: Boolean,
-            default: false
         }
     },
     setup() {

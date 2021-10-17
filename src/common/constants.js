@@ -10,7 +10,7 @@ export const ROUTER = {
     },
     ROUTE_PATHS: {
         DASHBOARD: '/',
-        BOT: 'bot/:id',
+        BOT: '/bot',
         BUILDER: '/builder',
         LOGIN: '/login',
         SCENARIO: '/scenario',

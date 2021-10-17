@@ -10,10 +10,10 @@
         <boto-statistic-users :metrics="data.users" :class="$style.card" />
       </n-gi>
       <n-gi>
-        <boto-statistic-time :metrics="data.timings" :class="$style.card" />
+        <boto-statistic-scenario :metrics="{ ...data.timings, ...data.scenario }" :class="$style.card" />
       </n-gi>
       <n-gi>
-        <boto-statistic-scenario :metrics="data.scenario" :class="$style.card" />
+        <boto-statistic-issues :class="$style.card" />
       </n-gi>
     </template>
   </n-grid>
@@ -21,7 +21,6 @@
 
 <style lang="stylus" module>
   .card {
-    max-width: 30vw;
     height: 25vh
   }
 </style>
@@ -30,14 +29,14 @@
 import { defineComponent, computed } from 'vue'
 import { NGrid, NGi, NH3, NEmpty } from "naive-ui";
 
-import BotoStatisticBasic from "./Basic.vue";
-import BotoStatisticUsers from "./Users.vue";
-import BotoStatisticTime from "./Time.vue";
-import BotoStatisticScenario from "./Scenario.vue";
+import BotoStatisticBasic from "./statistic/Basic.vue";
+import BotoStatisticUsers from "./statistic/Users.vue";
+import BotoStatisticScenario from "./statistic/Scenario.vue";
+import BotoStatisticIssues from "./statistic/Issues.vue";
 
 export default defineComponent({
   components: {
-    NGrid, NGi, NH3, NEmpty, BotoStatisticBasic, BotoStatisticUsers, BotoStatisticTime, BotoStatisticScenario
+    NGrid, NGi, NH3, NEmpty, BotoStatisticBasic, BotoStatisticUsers, BotoStatisticIssues, BotoStatisticScenario
   },
   props: {
     data: {

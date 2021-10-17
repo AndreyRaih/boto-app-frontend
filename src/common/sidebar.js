@@ -1,6 +1,5 @@
 import { h } from "vue";
 import {
-    Plus as CreateIcon,
     Cardboards as BotIcon,
     Stairs as ScenarioIcon,
     DeviceMobileMessage as MessagesIcon,
@@ -16,17 +15,12 @@ function renderIcon(icon) {
 
 export const defaultMenu = [
     {
-        label: 'Создать бота',
-        key: ROUTER.ROUTE_PATHS.BUILDER,
-        icon: renderIcon(CreateIcon)
-    },
-    {
-        label: 'Боты',
+        label: 'Бот',
         key: ROUTER.ROUTE_PATHS.BOT,
         icon: renderIcon(BotIcon),
     },
     {
-        label: 'Сценарии',
+        label: 'Сценарий',
         icon: renderIcon(ScenarioIcon),
         key: ROUTER.ROUTE_PATHS.SCENARIO,
     },

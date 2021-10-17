@@ -1,9 +1,10 @@
 <template>
     <n-card title="Основное" hoverable>
         <n-space justify="space-between">
-            <n-statistic label="Сообщения">{{ metrics.messages }}</n-statistic>
-            <n-statistic label="Пользователи">{{ metrics.users }}</n-statistic>
-            <n-statistic label="Эффективность">{{ `${(metrics.effectivity * 100).toString()}%` }}</n-statistic>
+            <n-statistic label="Сообщения">{{ metrics.messages.toString() }}</n-statistic>
+            <n-statistic label="Пользователи">{{ metrics.users.toString() }}</n-statistic>
+            <n-statistic label="Лиды">{{ metrics.leads.toString() }}</n-statistic>
+            <n-statistic label="Эффективность">{{ `${metrics.effectivity ? parseInt(metrics.effectivity) : '0'}%` }}</n-statistic>
         </n-space>
     </n-card>
 </template>
@@ -22,7 +23,7 @@
             default: () => ({
                 messages: 0,
                 users: 0,
-                invoices: 0,
+                leads: 0,
                 effectivity: 0
             })
         }

@@ -9,12 +9,14 @@
                 show-trigger
                 collapse-mode="width"
                 :collapsed-width="64"
+                :collapsed="isCollapsed"
+                @update-collapsed="isCollapsed=!isCollapsed"
                 :width="240"
                 :native-scrollbar="false"
             >
                 <boto-navigation-menu :menu="sidebarMenu" />
             </n-layout-sider>
-            <n-layout :content-style="{ padding: '48px' }">
+            <n-layout>
                 <slot></slot>
             </n-layout>
         </n-layout>
@@ -42,7 +44,7 @@ export default defineComponent({
     },
     setup() {
         return {
-            inverted: ref(false)
+            isCollapsed: ref(true)
         }
     }
 })

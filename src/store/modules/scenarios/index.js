@@ -1,10 +1,13 @@
 import httpClient from "@/common/httpClient";
 import firebase from "firebase";
 
+let requestQueueInterval = null;
+
 export default {
     state: {
         scenarios: [],
-        currentScenario: null
+        currentScenario: null,
+        requests: [],
     },
     mutations: {
         SET_SCENARIO_LIST(state, list) {
@@ -12,11 +15,40 @@ export default {
         },
         SET_CURRENT_SCENARIO(state, scenario) {
             state.currentScenario = scenario;
+        },
+        ADD_REQUEST_TO_QUEUE(state, request) {
+            const index = state.requests.length;
+            state.requests.push({
+                ...request,
+                index
+            });
+        },
+        REMOVE_REQUEST_FROM_QUEUE(state, targetIndex) {
+            const pos = state.requests.findIndex(({
+                index
+            }) => index === targetIndex);
+            state.requests.splice(pos, 1)
         }
     },
     actions: {
-        createScenario({ dispatch }, data) {
-            return httpClient.post('/admin/actions/scenario/create', data).then(() => dispatch('getScenarioList', data.creatorId)) 
+        runSync({
+            state,
+            dispatch
+        }) {
+            requestQueueInterval = setInterval(() => {
+                if (state.requests.length) dispatch('executeRequestInQueue')
+            }, 5000)
+        },
+        stopSync() {
+            if (requestQueueInterval) {
+                clearInterval(requestQueueInterval);
+                requestQueueInterval = null;
+            }
+        },
+        createScenario({
+            dispatch
+        }, data) {
+            return httpClient.post('/admin/actions/scenario/create', data).then(() => dispatch('getScenarioList', data.creatorId))
         },
         getScenarioList({
             commit
@@ -34,27 +66,47 @@ export default {
         },
         async updateScenario({
             state,
-            getters
+            commit,
         }, stage) {
-            if (stage && stage.images.length > 0) {
-                const storage = firebase.storage();
-                const imagesUrls = [];
-                for (let image of stage.images) {
-                    const storageRef = storage.ref(`${getters.userId}/${image.id}`);
-                    await storageRef.put(image.file)
-                    const url = await storageRef.getDownloadURL();
-                    imagesUrls.push(url);
+            commit('ADD_REQUEST_TO_QUEUE', {
+                url: `/admin/actions/scenario/${state.currentScenario.id}/update`,
+                data: {
+                    stage
                 }
-                stage.images = imagesUrls;
-            }
-            return httpClient.post(`/admin/actions/scenario/${state.currentScenario.id}/update`, {
-                stage
             });
         },
-        deleteScenarioStage({state, dispatch, getters}, id) {
-            return httpClient.post(`/admin/actions/scenario/${state.currentScenario.id}/delete_stage`, {
-                id
-            }).then(() => dispatch('getScenarioList', getters.userId));
+        deleteScenarioStage({
+            commit,
+            state
+        }, id) {
+            commit('ADD_REQUEST_TO_QUEUE', {
+                url: `/admin/actions/scenario/${state.currentScenario.id}/delete_stage`,
+                data: {
+                    id
+                }
+            });
+        },
+        async executeRequestInQueue({
+            state,
+            getters,
+            commit
+        }) {
+            for (const request of state.requests) {
+            commit('REMOVE_REQUEST_FROM_QUEUE', request.index);
+                const imagesUrls = [];
+                const images = request.data && request.data.stage && request.data.stage.images ? request.data.stage.images : [];
+                if (images.filter(item => typeof item === 'object').length > 0) {
+                    const storage = firebase.storage();
+                    for (let image of images) {
+                        const storageRef = storage.ref(`${getters.userId}/${image.id}`);
+                        await storageRef.put(image.file)
+                        const url = await storageRef.getDownloadURL();
+                        imagesUrls.push(url);
+                    }
+                    request.data.stage.images = imagesUrls;
+                }
+                await httpClient.post(request.url, request.data);
+            }
         },
         bindBotToScenario({
             state,

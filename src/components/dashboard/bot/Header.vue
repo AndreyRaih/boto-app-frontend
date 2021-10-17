@@ -4,13 +4,6 @@
       <n-h2 :class="$style.name" prefix="bar" align-text>
         <n-text>{{ name }}</n-text>
       </n-h2>
-      <div :class="$style.additional">
-
-        <n-text :class="$style.status">
-        Статус: <n-gradient-text :type="status.color"> {{ status.text }} </n-gradient-text>
-      </n-text>
-      <n-text :class="$style.status">Cценарий: {{ scenario || 'Нет данных' }}</n-text>
-      </div>
     </div>
   <div :class="$style.buttons">
     <n-button @click="showModal = true" circle>
@@ -95,13 +88,13 @@
 </style>
 
 <script>
-import { computed, defineComponent, ref } from "vue";
-import { NH2, NText, NGradientText, NSpace, NButton, NIcon, NModal, NCard, NThing, NDivider, NAvatar } from "naive-ui"
+import { defineComponent, ref } from "vue";
+import { NH2, NText, NSpace, NButton, NIcon, NModal, NCard, NThing, NDivider, NAvatar } from "naive-ui"
 import { Trash as TrashIcon , EditCircle as EditIcon, Camera as CameraIcon, InfoCircle as InfoIcon } from '@vicons/tabler'
 export default defineComponent({
   name: "BotoBotHeader",
   components: {
-    NH2, NText, NGradientText, NSpace, NButton, NIcon, TrashIcon, EditIcon, NModal, NCard, NThing, NDivider, CameraIcon, InfoIcon, NAvatar
+    NH2, NText, NSpace, NButton, NIcon, TrashIcon, EditIcon, NModal, NCard, NThing, NDivider, CameraIcon, InfoIcon, NAvatar
   },
   props: {
     name: {
@@ -118,27 +111,8 @@ export default defineComponent({
     }
   },
   emits: ["boto-bot-header:delete-bot"],
-  setup(props) {
-    const status = computed(() => {
-      switch (props.state) {
-        case 'online':
-          return {
-            text: 'Он-лайн',
-            color: 'success'
-          }
-        case 'offline':
-          return {
-            text: 'Офф-лайн',
-            color: 'error'
-          }
-        default:
-          return {
-            text: 'Неизвестно'
-          }
-      }
-    })
+  setup() {
     return {
-      status,
       showModal: ref(false)
     }
   }

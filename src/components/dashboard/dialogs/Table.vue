@@ -16,16 +16,15 @@ import { useStore } from 'vuex';
 const createColumns = ({ onAction }) => {
   return [
     {
-      title: 'Имя',
-      key: 'name'
+      title: 'ID Чата',
+      key: 'id'
     },
     {
-      title: 'Телефон',
-      key: 'phone'
-    },
-    {
-      title: 'Адресс',
-      key: 'address'
+      title: 'Последнее Сообщение',
+      key: 'lastMessage',
+      render(row) {
+        return row.lastMessage ? `${!row.lastMessage.isBot ? 'Пользователь' : 'Бот'}: ${row.lastMessage.text}` : '-'
+      }
     },
     {
       title: 'Последнее событие',
@@ -38,7 +37,7 @@ const createColumns = ({ onAction }) => {
             type: 'info'
           },
           {
-            default: () => `${row.lastEvent.name}${row.lastEvent.payload ? `: ${row.lastEvent.payload}` : ''}`
+            default: () => `${row.lastEvent.label}${row.lastEvent.value ? `: ${row.lastEvent.value}` : ''}`
           }
         ) : '-'
       }
@@ -51,7 +50,7 @@ const createColumns = ({ onAction }) => {
           NButton,
           {
             size: 'small',
-            onClick: () => onAction(row.id.toString())
+            onClick: () => onAction(`${row.botId}:${row.id.toString()}`)
           },
           { default: () => 'Перейти к диалогу' }
         ),]
@@ -68,18 +67,26 @@ export default defineComponent({
   setup() {
     const store = useStore();
 
-    const data = computed(() => store.state.dialogs.dialogList.map(({ id, contactData, history, lastEvent }, key) => ({
+    const data = computed(() => store.state.dialogs.dialogList.map(({ botId, id, history }, key) => ({
       key,
+      botId,
       id,
-      ...contactData,
       history,
-      lastEvent
+      lastEvent: history.filter(({ event }) => event && event.label).reverse()[0] ? history.filter(({ event }) => event && event.label).reverse()[0].event : null,
+      lastMessage: history.reverse()[0] || null
     })));
 
     const showModal = ref(false)
     const currentDialogId = ref(null);
 
-    const onSendMessage = (sendingData) => store.dispatch('sendMessageToDialog', sendingData)
+    const onSendMessage = (message) => {
+      const { botId: from, id: to } = store.state.dialogs.dialogList.find(({ id }) => store.state.dialogs.dialog.id === id);
+      store.dispatch('sendMessageToDialog', {
+        from,
+        to,
+        message
+      })
+    }
 
     watch(() => showModal.value, (val) => !val && (currentDialogId.value = null))
 

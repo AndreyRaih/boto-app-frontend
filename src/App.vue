@@ -5,28 +5,31 @@
   <n-config-provider :theme-overrides="themeOverrides">
     <n-message-provider>
       <n-dialog-provider>
-        <router-view />
+        <router-view v-if="!isLoaded" />
+        <boto-loader :style="{ height: '90vh' }" v-else />
       </n-dialog-provider>
     </n-message-provider>
   </n-config-provider>
 </template>
 
 <script>
-import { defineComponent, onBeforeMount, onMounted, computed } from '@vue/runtime-core'
+import { defineComponent, onBeforeMount, onMounted, computed, ref } from '@vue/runtime-core'
 import { NConfigProvider, NMessageProvider, NDialogProvider } from 'naive-ui'
 import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { useMeta } from "vue-meta";
 import { ROUTER } from './common/constants';
 import BotoLocalStorageManager from './common/localStorageManager';
+import BotoLoader from './components/dashboard/Loader.vue';
 
 export default defineComponent({
   name: "BotoApp",
-  components: { NConfigProvider, NMessageProvider, NDialogProvider },
+  components: { NConfigProvider, NMessageProvider, NDialogProvider, BotoLoader },
   setup() {
     const store = useStore();
     const router = useRouter();
     const storage = new BotoLocalStorageManager();
+    const isLoaded = ref(false);
 
     const computedMeta = computed(() => ({
       title: `| ${ROUTER.TITLE_MAP[router.currentRoute.value.name]}`
@@ -42,7 +45,10 @@ export default defineComponent({
     })
 
     onMounted(() => {
+      isLoaded.value = true;
       store.dispatch('getBotListById', store.getters.userId)
+        .then(() => store.dispatch('getFullBotDataById', store.state.bots.botList[0].id))
+        .finally(() => isLoaded.value = false);
     })
 
     router.beforeEach((to) => {
@@ -50,6 +56,7 @@ export default defineComponent({
     });
 
     return {
+      isLoaded,
       themeOverrides: {
         common: {
           primaryColor: '#396182',

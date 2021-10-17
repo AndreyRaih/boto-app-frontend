@@ -1,15 +1,26 @@
 <template>
-  <boto-builder-create-form 
-    :stages="stages"
-    :loading="loading"
-    @boto-builder:building-complete="onBotCreate"
-  />
+  <div :class="$style.conatiner">
+    <n-card :class="$style.card" title="Создание Telegram бота">
+      
+    </n-card>
+  </div>
 </template>
+
+<style lang="stylus" module>
+.conatiner {
+  height: calc(100vh - 90px);
+  display: flex;
+  justify-content center;
+  align-items center;
+}
+.card {
+  width: 600px;
+}
+</style>
 
 <script>
 import { defineComponent, ref } from 'vue'
-import BotoBuilderCreateForm from '@/components/dashboard/builder/Builder.vue'
-import { stages } from '@/common/builderStages';
+import { NCard } from "naive-ui";
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { ROUTER } from '@/common/constants';
@@ -17,11 +28,13 @@ import { ROUTER } from '@/common/constants';
 export default defineComponent({
   name: "BotoBuilderMainView",
   components: {
-    BotoBuilderCreateForm
+    NCard
   },
   setup() {
     const store = useStore();
     const router = useRouter();
+    const name = ref(null);
+    const token = ref(null);
     const loading = ref(false);
 
     function onBotCreate(fields) {
@@ -38,7 +51,8 @@ export default defineComponent({
     }
 
     return {
-      stages,
+      name,
+      token,
       loading,
       onBotCreate
     }

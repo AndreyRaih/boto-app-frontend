@@ -1,135 +1,233 @@
 <template>
-    <boto-scenario-builder-select />
-    <n-tree
-        :class="$style.tree"
-        :selectable="false"
-        block-line
-        :data="treeData"
-        v-if="treeData.length > 0"
-    />
-    <n-button @click="addTreeNode()" v-else>Добавить</n-button>
-    <boto-stage-modal
-        v-model:show="showStageEditModal"
-        :root="!treeData.length"
-        :is-loading="isStageEditModalLoading"
-        @boto-stage-editor:create-stage="handleStageCreating"
-    />
+    <div class="boto-drawflow-container">
+        <div id="boto-drawflow"></div>
+        <div class="boto-drawflow-controls">
+            <n-popselect
+                trigger="click"
+                :options="options"
+                @update:value="onSelectModule"
+                placement="left-start"
+            >
+                <n-button circle>
+                    <template #icon>
+                        <n-icon>
+                            <apps />
+                        </n-icon>
+                    </template>
+                </n-button>
+            </n-popselect>
+            <n-button @click="onZoomIn" circle>
+                <template #icon>
+                    <n-icon>
+                        <plus />
+                    </n-icon>
+                </template>
+            </n-button>
+            <n-button @click="onZoomOut" circle>
+                <template #icon>
+                    <n-icon>
+                        <minus />
+                    </n-icon>
+                </template>
+            </n-button>
+        </div>
+    </div>
 </template>
 
-<style lang="stylus" module>
-    .tree {
-        :global .n-tree-node {
-            align-items center;
-            margin: 4px 0
-            padding: 4px 0
-        }
-    }
-</style>
-
 <script>
-import { computed, defineComponent, h, ref, watch } from "vue"
-import { NTree, NButton, NSpace, NIcon, NTooltip, useMessage } from "naive-ui";
-import { Trash as TrashIcon, Plus as PlusIcon, Bulb as TriggerIcon, Photo as HasPhotoIcon, PhotoOff as NoPhotoIcon } from '@vicons/tabler';
-import BotoScenarioBuilderSelect from "./ScenarioSelect.vue";
-import BotoStageModal from "./edit/Stage.vue";
-import { v4 as uuid } from 'uuid';
-import { useStore } from "vuex";
+import * as Vue from 'vue';
+import { defineComponent, ref, onMounted, onUnmounted, computed } from "vue";
+import Drawflow from 'drawflow'
+import "drawflow/dist/drawflow.min.css";
+import Node, { BOTO_SCENARIO_BUILDER_DELETE_NODE_EVENT } from "./Node.vue";
+import { NButton, NIcon, NPopselect } from "naive-ui";
+import { Minus, Plus, Apps } from "@vicons/tabler"
+import { useStore } from 'vuex';
+import { v4 } from 'uuid';
+const emitter = require('tiny-emitter/instance');
 
 export default defineComponent({
-    name: "BotoScenarioBuilder",
-    components: {
-        NTree, NButton, BotoScenarioBuilderSelect, BotoStageModal
-    },
+    name: "BotoScenarioVisualEditor",
+    components: { NButton, NIcon, NPopselect, Minus, Plus, Apps },
     setup() {
-        const messages = useMessage();
-
         const store = useStore();
-        const stages = ref([]);
-        const processedItemId = ref(null);
+        const editor = ref(null);
+        const stages = computed(() => store.state.scenarios.currentScenario ? store.state.scenarios.currentScenario.stages : [])
+        const syncNodeId = ref(1)
+        const nodes = ref([]);
 
-        const treeData = computed(() => buildTree(stages.value))
+        onMounted(() => initEditor())
+        onUnmounted(() => store.dispatch('stopSync'))
 
-        const showStageEditModal = ref(false);
-        const isStageEditModalLoading = ref(false);
+        const buildDefaultStage = (title) => ({
+            id: v4(),
+            title,
+            event: null,    
+            triggers: [],
+            line: [],
+            text: null
+        })
 
-        watch(() => store.state.scenarios.currentScenario, (value) => value && (stages.value = value.stages), { deep: true, immediate: true })
+        function initEditor() {
+            const id = document.getElementById("boto-drawflow")
+            editor.value = new Drawflow(id, Vue);
+            editor.value.start();
 
-        const elemRef = {
-            parent: null,
-            id: null
-        };
-
-        const buildTree = (list, parent) => {
-            const tree = [];
-            const getActionsComponent = (item) => () => h(NSpace, { align: 'center' }, [
-                h(NIcon, { size: '16px', depth: '3' }, h(item.images.length ? HasPhotoIcon : NoPhotoIcon)),
-                h(NTooltip,
-                    { placement: 'top', trigger: 'click' },
-                    {
-                        trigger: () => h(NButton,
-                            { circle: true, size: 'small', disabled: !item.parentId },
-                            { icon: () => h(TriggerIcon) }
-                        ),
-                        default: () => h('span',
-                            {}, `Тип: ${item.trigger.type === 'button' ? 'Кнопка' : 'Ввод'},\n Описание: ${item.trigger.description}`
-                        )
-                    }),
-                h(NButton, { circle: true, size: 'small', onClick: () => addTreeNode(item.key) }, { icon: () => h(PlusIcon) }),
-                h(NButton, { circle: true, loading: item.key === processedItemId.value, size: 'small', onClick: () => removeTreeNode(item.key) }, { icon: () => h(TrashIcon) })
-            ]);
-
-            const filteredList = [...list].filter(child => child.parentId === parent).map(child => ({ ...child, children: undefined }));
-
-            for (let i = 0; i < filteredList.length; i++) {
-                const item = filteredList[i];
-                item.label = item.text;
-                item.suffix = getActionsComponent(item, i);
-                if (list.some(child => child.parentId === item.key)) item.children = buildTree(list, item.key)
-                tree.push(item);
+            if (!stages.value.length) {
+                createNode(1, buildDefaultStage('Начало'));
+            } else {
+                convertStagesToNodes(stages.value)
             }
-            return tree;
+            store.dispatch('runSync')
         }
 
-        const addTreeNode = (parentId) => {
-            elemRef.parent = parentId;
-            showStageEditModal.value = true;
-        }
-
-        const removeTreeNode = (id) => {
-            processedItemId.value = id;
-            store.dispatch('deleteScenarioStage', id)
-                .then(() => {
-                    messages.info("Сценарий обновлен")
-                    stages.value = [...stages.value].filter(item => item.key !== id && item.parentId !== id)
-                    processedItemId.value = null;
-                });
-        };
-
-        const handleStageCreating = (updates) => {
-            isStageEditModalLoading.value = true;
-            const stage = {
-                key: uuid(),
-                parentId: elemRef.parent,
-                ...updates
+        const convertStagesToNodes = (stages) => {
+            const bindings = []
+            for (const node of stages) {
+                const data = {...node, name: `node-${syncNodeId.value}` };
+                bindings.push({ nodeId: syncNodeId.value, id: data.id, triggers: data.triggers })
+                createNode(syncNodeId.value, data)
             }
-            store.dispatch('updateScenario', stage)
-                .then(() => messages.info("Сценарий обновлен"))
-                .finally(() => {
-                    elemRef.id = null;
-                    elemRef.parent = null;
-                    showStageEditModal.value = false;
-                    isStageEditModalLoading.value = false;
-                    stages.value.push(stage)
+            for (const node of bindings) {
+                node.triggers.forEach((trigger) => {
+                    const bindedNode = bindings.find(({ id }) => trigger.destinationId === id);
+                    bindNodes(node.nodeId, bindedNode.nodeId);
                 })
+            }
+        }
+
+        const createNode = (index, node, { x, y } = { x: 24, y: 24}) => {
+            editor.value.registerNode(node.name, Node, {
+                node,
+                isRoot: index === 1,
+                onUpdateNode: handleNodeUpdating,
+                onAddTrigger: (node) => handleTriggerAdding(index, node),
+                onRemoveNode: () => handleNodeRemoving(node)
+            });
+            editor.value.addNode('node', 0, 1, x, y, 'boto-node', {}, node.name, 'vue');
+            nodes.value.push(node)
+            syncNodeId.value += 1;
+        }
+
+        const bindNodes = (parent, child) => {
+            editor.value.addNodeInput(child)
+            editor.value.addConnection(parent, child, 'output_1', 'input_1')
+        }
+
+        const deleteNode = ({ id, name }) => {
+            store.dispatch('deleteScenarioStage', id)
+            editor.value.removeNodeId(name);
+            editor.value.removeConnectionNodeId(name)
+        }
+
+        const handleNodeUpdating = (node) => store.dispatch('updateScenario', node);
+
+        const handleTriggerAdding = (index, node) => {
+            const nextIndex = syncNodeId.value
+            const trigger = node.triggers[node.triggers.length - 1];
+            const newNode = {...buildDefaultStage(trigger.text), name: `node-${nextIndex}`, parentId: node.id };
+            trigger.destinationId = newNode.id;
+            const { pos_x, pos_y } = editor.value.getNodeFromId(node.name.slice(5));
+            createNode(nextIndex, newNode, { x: pos_x + 360, y: (pos_y +((node.triggers.length - 1) * 400)) })
+            bindNodes(index, nextIndex);
+            handleNodeUpdating(node)
+            handleNodeUpdating(newNode)
+        }
+
+        const handleNodeRemoving = (node) => {
+            if (!node) return;
+            for (const child of node.triggers) {
+                const data = nodes.value.find(({ id }) => id === child.destinationId);
+                if (data) handleNodeRemoving(data);
+            }
+            deleteNode(node)
+            emitter.emit(BOTO_SCENARIO_BUILDER_DELETE_NODE_EVENT, node.id)
+        }
+
+        const onSelectModule = () => {
         }
 
         return {
-            showStageEditModal,
-            treeData,
-            handleStageCreating,
-            addTreeNode,
-            isStageEditModalLoading
+            onZoomIn: () => editor.value.zoom_in(),
+            onZoomOut: () => editor.value.zoom_out(),
+            onSelectModule,
+            options: [
+                {
+                    label: 'Сегментация',
+                    value: 'add_segment',
+                },
+                {
+                    label: 'Автоворонка',
+                    value: 'new_funnel',
+                },
+                {
+                    label: 'Квиз',
+                    value: 'new_quize',
+                },
+            ]
         }
     }
 })
 </script>
+
+<style lang="stylus">
+.boto-drawflow-container {
+    position relative
+    width: 100%;
+    height: 100%;
+    .boto-drawflow-controls {
+        position absolute;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        top: 24px;
+        right: 24px
+        & > *:not(:last-of-type) {
+            margin-bottom: 4px;
+        }
+    }
+}
+#boto-drawflow {
+    width: 100%;
+    height: 100%;
+    .drawflow-node {
+        display: flex;
+        align-items: center;
+        position: absolute;
+        background: #fff;
+        min-height: 40px;
+        min-width: 280px;
+        max-width: 280px;
+        width: auto;
+        border-radius: 4px;
+        border: 1px solid #eee;
+        box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, .1);
+        color: #000;
+        z-index: 2;
+        padding: 15px;
+    }
+    .parent-node .drawflow-delete {
+        right: -10px;
+        top: -10px;
+    }
+    .drawflow-delete {
+        display: none;
+    }
+    .drawflow-node .input {
+        background: #fff;
+    }
+    .drawflow-node .input, .drawflow-node .output {
+        position: relative;
+        width: 24px;
+        height: 24px;
+        background: #fff;
+        border-radius: 50%;
+        border: 1px solid #eee;
+        box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, .1);
+        cursor: crosshair;
+        z-index: 1;
+        margin-bottom: 5px;
+    }
+}
+</style>
