@@ -94,8 +94,8 @@ export default {
             for (const request of state.requests) {
             commit('REMOVE_REQUEST_FROM_QUEUE', request.index);
                 const imagesUrls = [];
-                const images = request.data && request.data.stage && request.data.stage.images ? request.data.stage.images : [];
-                if (images.filter(item => typeof item === 'object').length > 0) {
+                const images = request.data && request.data.stage && request.data.stage.images ? request.data.stage.images.filter(item => typeof item === 'object') : [];
+                if (images.length > 0) {
                     const storage = firebase.storage();
                     for (let image of images) {
                         const storageRef = storage.ref(`${getters.userId}/${image.id}`);

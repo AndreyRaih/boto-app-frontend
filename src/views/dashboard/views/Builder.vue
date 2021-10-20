@@ -1,8 +1,6 @@
 <template>
   <div :class="$style.conatiner">
-    <n-card :class="$style.card" title="Создание Telegram бота">
-      
-    </n-card>
+    <boto-create-bot-form :loading="loading" @create="onBotCreate" />
   </div>
 </template>
 
@@ -20,21 +18,19 @@
 
 <script>
 import { defineComponent, ref } from 'vue'
-import { NCard } from "naive-ui";
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { ROUTER } from '@/common/constants';
+import BotoCreateBotForm from '@/components/dashboard/bot/CreateForm.vue';
 
 export default defineComponent({
   name: "BotoBuilderMainView",
   components: {
-    NCard
+    BotoCreateBotForm
   },
   setup() {
     const store = useStore();
     const router = useRouter();
-    const name = ref(null);
-    const token = ref(null);
     const loading = ref(false);
 
     function onBotCreate(fields) {
@@ -51,9 +47,6 @@ export default defineComponent({
     }
 
     return {
-      name,
-      token,
-      loading,
       onBotCreate
     }
   }

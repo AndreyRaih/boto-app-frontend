@@ -51,7 +51,7 @@ export default defineComponent({
         state: store.state.bots.currentBot.state,
         scenario: store.state.bots.currentBot.activeScenario ? store.state.bots.currentBot.activeScenario.label : null
       }) : {});
-      const analyticData = computed(() => store.state.bots.currentBot && store.state.bots.currentBot.analytic ? store.state.bots.currentBot.analytic : {})
+      const analyticData = computed(() => store.state.bots.currentBot && store.state.bots.currentBot.analytic ? store.state.bots.currentBot.analytic : null)
 
       const onDeleteBot = (id) => dialog.warning({
           title: 'Удаление бота',

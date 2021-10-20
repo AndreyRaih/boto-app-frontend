@@ -1,6 +1,7 @@
 <template>
     <n-card title="Проблемные шаги" hoverable>
-        <n-empty></n-empty>
+        <n-empty description="Данные временно не доступны">
+        </n-empty>
     </n-card>
 </template>
   

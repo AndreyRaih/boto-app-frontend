@@ -56,7 +56,16 @@ export default defineComponent({
     }
     const stopDialogsObserver = () => clearInterval(observerTimer);
 
-    const onSendMessage = (msg) => emit('boto-dialog-modal:send-message', msg);
+    const onSendMessage = (msg) => {
+      emit('boto-dialog-modal:send-message', msg);
+      store.commit('SET_CURRENT_DIALOG', {...store.state.dialogs.dialog, history: [...store.state.dialogs.dialog.history, { 
+        date: Date.now(),
+        event: null,
+        isBot: true,
+        isLastMsg: true,
+        text: msg
+      }]})
+    }
 
     watch(() => props.show, (val) => val ? runDialogsObserver() : stopDialogsObserver());
 

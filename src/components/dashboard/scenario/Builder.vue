@@ -86,7 +86,15 @@ export default defineComponent({
             for (const node of stages) {
                 const data = {...node, name: `node-${syncNodeId.value}` };
                 bindings.push({ nodeId: syncNodeId.value, id: data.id, triggers: data.triggers })
-                createNode(syncNodeId.value, data)
+                if (syncNodeId.value > 1) {
+                    const parentIndex = stages.findIndex(({ triggers }) => triggers.some(trigger => trigger.destinationId === node.id))
+                    const parent = stages.find(({ triggers }) => triggers.some(trigger => trigger.destinationId === node.id))
+                    const childIndex = parent.triggers.findIndex(trigger => trigger.destinationId === node.id);
+                    const { pos_x, pos_y } = editor.value.getNodeFromId(parentIndex + 1);
+                    createNode(syncNodeId.value, data, { x: pos_x + 360, y: pos_y + (childIndex * 400) })
+                } else {
+                    createNode(syncNodeId.value, data)
+                }
             }
             for (const node of bindings) {
                 node.triggers.forEach((trigger) => {

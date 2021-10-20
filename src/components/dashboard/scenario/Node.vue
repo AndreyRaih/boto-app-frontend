@@ -125,6 +125,9 @@
     .n-upload-file-list .n-upload-file .n-upload-file-info .n-upload-file-info__action .n-button {
         margin-right: 0
     }
+    .n-upload-file--info-status {
+        display: none!important
+    }
 }
 </style>
 
@@ -156,7 +159,7 @@ export default defineComponent({
         const text = ref(props.node.text);
         const event = ref(props.node.event);
         const triggers = ref(props.node.triggers);
-        const fileList = ref(props.node.images.map((image) => {
+        const fileList = ref(props.node.images && props.node.images.map((image) => {
             if (typeof image === 'string') {
                 return { status: 'finished', id: image, name: image, file: null, url: image }
             } else {
@@ -218,8 +221,8 @@ export default defineComponent({
             showActionPopover,
             showEventPopover,
             onAddFile: ({ file }) => {
-                fileList.value.push({ status: 'finished', id: file.id, name: file.name, file: file.file, url: file.url })
-                updateNode()
+                fileList.value.push({ status: 'finished', id: file.id, name: file.name, file: file.file, url: file.url });
+                if (!props.node.images.some(({ id }) => id === file.id)) updateNode()
             },
             onRemoveFile: ({ file }) => {
                 const pos = fileList.value.findIndex((item) => item.id === file.id)
