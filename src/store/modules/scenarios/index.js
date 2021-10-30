@@ -8,6 +8,7 @@ export default {
         scenarios: [],
         currentScenario: null,
         requests: [],
+        editInProgress: false
     },
     mutations: {
         SET_SCENARIO_LIST(state, list) {
@@ -17,6 +18,7 @@ export default {
             state.currentScenario = scenario;
         },
         ADD_REQUEST_TO_QUEUE(state, request) {
+            state.editInProgress = true;
             const index = state.requests.length;
             state.requests.push({
                 ...request,
@@ -28,6 +30,9 @@ export default {
                 index
             }) => index === targetIndex);
             state.requests.splice(pos, 1)
+        },
+        CHANGE_EDITOR_STATE(state, newValue) {
+            state.editInProgress = newValue;
         }
     },
     actions: {
@@ -92,21 +97,31 @@ export default {
             commit
         }) {
             for (const request of state.requests) {
-            commit('REMOVE_REQUEST_FROM_QUEUE', request.index);
-                const imagesUrls = [];
-                const images = request.data && request.data.stage && request.data.stage.images ? request.data.stage.images.filter(item => typeof item === 'object') : [];
-                if (images.length > 0) {
-                    const storage = firebase.storage();
-                    for (let image of images) {
-                        const storageRef = storage.ref(`${getters.userId}/${image.id}`);
-                        await storageRef.put(image.file)
-                        const url = await storageRef.getDownloadURL();
-                        imagesUrls.push(url);
+                commit('REMOVE_REQUEST_FROM_QUEUE', request.index);
+                const data = { ...request.data.stage } ;
+                let images = data.images && data.images.length ? data.images.filter(item => typeof item === 'object') : [];
+                if (data) {
+                    if (images.length > 0) {
+                        const imagesUrls = [];
+                        const storage = firebase.storage();
+                        for (let image of images) {
+                            let url = null;
+                            if (image.isUploaded) {
+                                url = image.name
+                            } else {
+                                const storageRef = storage.ref(`${getters.userId}/${image.id}`);
+                                await storageRef.put(image.file)
+                                url = await storageRef.getDownloadURL();
+                            }
+                            imagesUrls.push(url);
+                        }
+                        images = imagesUrls;
                     }
-                    request.data.stage.images = imagesUrls;
+                    await httpClient.post(request.url, { stage: {...data, images } });
+                    
                 }
-                await httpClient.post(request.url, request.data);
             }
+            commit('CHANGE_EDITOR_STATE', Boolean(state.requests.length));
         },
         bindBotToScenario({
             state,

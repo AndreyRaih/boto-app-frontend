@@ -40,8 +40,8 @@
         </n-space>
         <n-text>Изображения</n-text>
         <n-upload
+            :key="fileList ? fileList.length : 0"
             :default-file-list="fileList"
-            multiple
             accept="image/*"
             list-type="image-card"
             @before-upload="onAddFile"
@@ -61,7 +61,23 @@
         />
         <n-text :depth="3">Доступные действия:</n-text>
         <div class="boto-node__actions">
-            <n-button v-for="trigger in triggers" :key="trigger.text">{{ trigger.text }}</n-button>
+            <n-popover v-for="trigger in triggers" :key="trigger.text" trigger="manual" :show="trigger.visible" raw>
+                <template #trigger>
+                    <n-button @click="trigger.visible = !trigger.visible" >{{ trigger.text }}</n-button>
+                </template>
+                <n-input-group class="boto-node__action-create-form">
+                    <n-input
+                        v-model:value="trigger.text"
+                        type="text"
+                        size="small"
+                        placeholder="Введите текст кнопки"
+                        clearable
+                        @keyup.enter="updateNode"
+                        :style="{ width: '75%' }"
+                    />
+                    <n-button :disabled="!trigger.text" size="small" type="primary" @click="updateNode">Добавить</n-button>
+                </n-input-group>
+            </n-popover>
             <n-popover trigger="manual" :show="showActionPopover" raw>
                 <template #trigger>
                     <n-button @click="showActionPopover = !showActionPopover" dashed>Добавить</n-button>
@@ -158,10 +174,15 @@ export default defineComponent({
     setup(props, { emit }) {
         const text = ref(props.node.text);
         const event = ref(props.node.event);
-        const triggers = ref(props.node.triggers);
+        const triggers = ref(props.node.triggers.map(
+            trigger => ({
+                ...trigger,
+                visible: false
+            })
+        ));
         const fileList = ref(props.node.images && props.node.images.map((image) => {
             if (typeof image === 'string') {
-                return { status: 'finished', id: image, name: image, file: null, url: image }
+                return { status: 'finished', isUploaded: true, id: image, name: image, file: null, url: image }
             } else {
                 return image;
             }
@@ -221,7 +242,7 @@ export default defineComponent({
             showActionPopover,
             showEventPopover,
             onAddFile: ({ file }) => {
-                fileList.value.push({ status: 'finished', id: file.id, name: file.name, file: file.file, url: file.url });
+                fileList.value.push({ status: 'finished', isUploaded: false, id: file.id, name: file.name, file: file.file, url: file.url });
                 if (!props.node.images.some(({ id }) => id === file.id)) updateNode()
             },
             onRemoveFile: ({ file }) => {

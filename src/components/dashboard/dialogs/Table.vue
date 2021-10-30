@@ -3,6 +3,7 @@
     <div>
       <n-popselect placement="bottom-start" v-model:value="selectedEventsForFilter" multiple :options="eventsForFilter">
         <n-button
+          :disabled="!eventsForFilter.length"
           :style="{ marginRight: '16px' }"
         >{{ (Array.isArray(selectedEventsForFilter) && selectedEventsForFilter.length) ? `Выбрано ${selectedEventsForFilter.length} событий` : 'Фильтр по событиям' }}</n-button>
       </n-popselect>
@@ -123,7 +124,7 @@ export default defineComponent({
       const eventList = [];
       for (const dialog of store.state.dialogs.dialogList) {
         dialog.history.forEach(({ event }) => {
-          if (event && !eventList.some(({ value }) => value === (event.value || event))) eventList.push({ label: event.value, value: event.value })
+          if (event && (event.label || event.value) && !eventList.some(({ value }) => value === (event.value || event))) eventList.push({ label: event.value, value: event.value })
         })
       }
       return eventList;

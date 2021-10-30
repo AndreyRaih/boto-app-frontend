@@ -3,7 +3,7 @@
     <template v-slot:title="{ content }">Boto App {{ content }}</template>
   </metainfo>
   <n-config-provider :theme-overrides="themeOverrides">
-    <n-message-provider>
+    <n-message-provider placement="top-right">
       <n-dialog-provider>
         <router-view v-if="!isLoaded" />
         <boto-loader :style="{ height: '90vh' }" v-else />
@@ -47,7 +47,14 @@ export default defineComponent({
     onMounted(() => {
       isLoaded.value = true;
       store.dispatch('getBotListById', store.getters.userId)
-        .then(() => store.dispatch('getFullBotDataById', store.state.bots.botList[0].id))
+        .then(() => {
+          if (store.state.bots.botList.length) {
+            store.dispatch('getFullBotDataById', store.state.bots.botList[0].id);
+            router.push({ name: ROUTER.ROUTE_NAMES.BOT });
+          } else {
+            router.push({ name: ROUTER.ROUTE_NAMES.BUILDER });
+          }
+        })
         .finally(() => isLoaded.value = false);
     })
 

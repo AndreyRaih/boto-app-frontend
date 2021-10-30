@@ -68,7 +68,7 @@ export default defineComponent({
         return {
             avarageSessionDuration: computed(() => {
                 const sec = props.metrics.average / 1000;
-                return `${1} мин ${Math.ceil(sec % 60)} сек`;
+                return `${Math.ceil(sec / 60)} мин ${Math.ceil(sec % 60)} сек`;
             }),
             selectedEvent,
             percentage,

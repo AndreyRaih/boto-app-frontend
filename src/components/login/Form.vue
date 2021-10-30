@@ -66,17 +66,26 @@ export default defineComponent({
         const onSignIn = () => {
             loading.value = true;
             store.dispatch('signIn', { email: username.value, password: password.value })
-                .then(() => router.push({ name: ROUTER.ROUTE_NAMES.BUILDER }))
+                .then(() => redirectByBotListState())
                 .catch(() => messages.error("Во время авторизации прозошла ошибка. Попробуйте еще раз"))
                 .finally(() => loading.value = false)
         };
         const onSignUp = () => {
             loading.value = true;
             store.dispatch('signUp', { email: username.value, password: password.value })
-                .then(() => router.push({ name: ROUTER.ROUTE_NAMES.BUILDER }))
+                .then(() => redirectByBotListState())
                 .catch(() => messages.error("Во время регистрации прозошла ошибка. Попробуйте еще раз"))
                 .finally(() => loading.value = false)
         };
+
+        const redirectByBotListState = () => {
+            if (store.state.bots.botList.length) {
+                store.dispatch('getFullBotDataById', store.state.bots.botList[0].id);
+                router.push({ name: ROUTER.ROUTE_NAMES.BOT });
+            } else {
+                router.push({ name: ROUTER.ROUTE_NAMES.BUILDER });
+            }
+        }
 
         return {
             username,
