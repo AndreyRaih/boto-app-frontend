@@ -58,7 +58,7 @@ export default defineComponent({
           content: 'Вы действительно хотите удалить бота из Boto?',
           positiveText: 'Удалить',
           negativeText: 'Отмена',
-          onPositiveClick: () => store.dispatch('deleteBot', id).then(() => router.push({ name: ROUTER.ROUTE_NAMES.BOT, params: { id: store.state.bots.currentBot.id }})),
+          onPositiveClick: () => store.dispatch('deleteBot', id).then(() => router.push({ name: ROUTER.ROUTE_NAMES.BUILDER })),
         })
 
       return {

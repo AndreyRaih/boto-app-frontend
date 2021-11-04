@@ -50,6 +50,16 @@ export default {
                 requestQueueInterval = null;
             }
         },
+        async executeRequestInQueue({
+            state,
+            commit
+        }) {
+            for (const request of state.requests) {
+                commit('REMOVE_REQUEST_FROM_QUEUE', request.index);
+                await httpClient.post(request.url, request.data);
+            }
+            commit('CHANGE_EDITOR_STATE', Boolean(state.requests.length));
+        },
         createScenario({
             dispatch
         }, data) {
@@ -71,68 +81,41 @@ export default {
         },
         async updateScenario({
             state,
+            getters,
             commit,
-        }, stage) {
+        }, updates) {
+            const data = [...updates];
+            const stages = [];
+            const _getUrlsList = async (images = []) => {
+                const imagesUrls = [];
+                if (images.length > 0) {
+                    const storage = firebase.storage();
+                    for (let image of images) {
+                        let url = null;
+                        if (typeof image === 'string') {
+                            url = image;
+                        } else if (image.isUploaded) {
+                            url = image.name
+                        } else {
+                            const storageRef = storage.ref(`${getters.userId}/${image.id}`);
+                            await storageRef.put(image.file)
+                            url = await storageRef.getDownloadURL();
+                        }
+                        imagesUrls.push(url);
+                    }
+                }
+                return imagesUrls;
+            };
+
+            for (const stage of data) {
+                stage.images = await _getUrlsList(Array.isArray(stage.images) ? [...stage.images] : [])
+                stages.push(stage);
+            }
             commit('ADD_REQUEST_TO_QUEUE', {
                 url: `/admin/actions/scenario/${state.currentScenario.id}/update`,
                 data: {
-                    stage
+                    stages
                 }
-            });
-        },
-        deleteScenarioStage({
-            commit,
-            state
-        }, id) {
-            commit('ADD_REQUEST_TO_QUEUE', {
-                url: `/admin/actions/scenario/${state.currentScenario.id}/delete_stage`,
-                data: {
-                    id
-                }
-            });
-        },
-        async executeRequestInQueue({
-            state,
-            getters,
-            commit
-        }) {
-            for (const request of state.requests) {
-                commit('REMOVE_REQUEST_FROM_QUEUE', request.index);
-                const data = { ...request.data.stage } ;
-                let images = data.images && data.images.length ? data.images.filter(item => typeof item === 'object') : [];
-                if (data) {
-                    if (images.length > 0) {
-                        const imagesUrls = [];
-                        const storage = firebase.storage();
-                        for (let image of images) {
-                            let url = null;
-                            if (image.isUploaded) {
-                                url = image.name
-                            } else {
-                                const storageRef = storage.ref(`${getters.userId}/${image.id}`);
-                                await storageRef.put(image.file)
-                                url = await storageRef.getDownloadURL();
-                            }
-                            imagesUrls.push(url);
-                        }
-                        images = imagesUrls;
-                    }
-                    await httpClient.post(request.url, { stage: {...data, images } });
-                    
-                }
-            }
-            commit('CHANGE_EDITOR_STATE', Boolean(state.requests.length));
-        },
-        bindBotToScenario({
-            state,
-            commit
-        }, id) {
-            commit('SET_CURRENT_SCENARIO', {
-                ...state.currentScenario,
-                bot: id
-            })
-            return httpClient.post(`/admin/actions/scenario/${state.currentScenario.id}/bind`, {
-                id
             });
         }
     }

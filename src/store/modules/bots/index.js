@@ -72,10 +72,8 @@ export default {
                 id
             }).then(() => dispatch('getFullBotDataById', state.currentBot.id));
         },
-        deleteBot({ state, commit, getters, dispatch }) {
-            return httpClient.get(`admin/bot/${state.currentBot.id}/delete`)
-                .then(() => dispatch('getBotListById', getters.userId))
-                .then(() => commit('SET_BOT', state.botList[0]));
+        deleteBot({ state }) {
+            return httpClient.get(`admin/bot/${state.currentBot.id}/delete`);
         }
     }
 }

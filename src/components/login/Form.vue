@@ -78,9 +78,9 @@ export default defineComponent({
                 .finally(() => loading.value = false)
         };
 
-        const redirectByBotListState = () => {
+        const redirectByBotListState = async () => {
             if (store.state.bots.botList.length) {
-                store.dispatch('getFullBotDataById', store.state.bots.botList[0].id);
+                await store.dispatch('getFullBotDataById', store.state.bots.botList[0].id);
                 router.push({ name: ROUTER.ROUTE_NAMES.BOT });
             } else {
                 router.push({ name: ROUTER.ROUTE_NAMES.BUILDER });

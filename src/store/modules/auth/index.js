@@ -39,6 +39,11 @@ export default {
     },
     removeFromStorage() {
       storage.remove('app:auth');
+    },
+    // Temp:
+    sendFeedback({ getters, state }, text) {
+      const fieldId = `${state.userData.email}-${Date.now().toString()}`;
+      return firebase.firestore().collection('feedback').doc(getters.userId).set({ [fieldId]: text }, { merge: true });
     }
   }
 }

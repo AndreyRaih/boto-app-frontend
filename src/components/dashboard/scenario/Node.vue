@@ -1,6 +1,6 @@
 <template>
     <div class="boto-node">
-        <n-space justify="space-between">
+        <n-space justify="space-between" :wrap="false">
             <n-h5 prefix="bar">
                 <div>{{ node.title || 'Шаг' }}</div>
                 <n-text>
@@ -10,7 +10,7 @@
                     >{{ event && event.label ? event.label : 'пусто' }}</n-text>
                 </n-text>
             </n-h5>
-            <n-space justify="end">
+            <n-space :style="{ minWidth: '60px' }" justify="end">
                 <n-popover trigger="manual" :show="showEventPopover" raw>
                     <template #trigger>
                         <n-button @click="showEventPopover=!showEventPopover" text style="font-size: 24px;">
@@ -67,12 +67,17 @@
                 </template>
                 <n-input-group class="boto-node__action-create-form">
                     <n-input
-                        v-model:value="trigger.text"
+                        v-model:value="patchedTriggerText"
                         type="text"
                         size="small"
                         placeholder="Введите текст кнопки"
                         clearable
-                        @keyup.enter="updateNode"
+                        @focus="() => patchedTriggerText = trigger.text"
+                        @blur="() => trigger.text = patchedTriggerText"
+                        @keyup.enter="() => {
+                            trigger.text = patchedTriggerText;
+                            updateNode();
+                        }"
                         :style="{ width: '75%' }"
                     />
                     <n-button :disabled="!trigger.text" size="small" type="primary" @click="updateNode">Добавить</n-button>
@@ -150,7 +155,7 @@
 <script>
 import { NUpload, NDivider, NInput, NButton, NH5, NText, NPopover, NInputGroup, NSpace, NIcon } from 'naive-ui'
 import { Trash as TrashIcon, Flare as FlareIcon } from "@vicons/tabler"
-import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue'
+import { defineComponent, ref, onMounted, onUnmounted } from 'vue'
 var emitter = require('tiny-emitter/instance');
 
 export const BOTO_SCENARIO_BUILDER_DELETE_NODE_EVENT = 'BOTO-BUILDER:NODE-REMOVE'
@@ -180,14 +185,15 @@ export default defineComponent({
                 visible: false
             })
         ));
-        const fileList = ref(props.node.images && props.node.images.map((image) => {
+        const fileList = ref(props.node.images ? props.node.images.map((image) => {
             if (typeof image === 'string') {
                 return { status: 'finished', isUploaded: true, id: image, name: image, file: null, url: image }
             } else {
                 return image;
             }
-        }));
+        }) : []);
         const newActionText = ref(null);
+        const patchedTriggerText = ref(null);
         const newEventText = ref(null);
         const showActionPopover = ref(false);
         const showEventPopover = ref(false);
@@ -199,22 +205,22 @@ export default defineComponent({
         })
         onUnmounted(() => emitter.off(BOTO_SCENARIO_BUILDER_DELETE_NODE_EVENT))
 
-        const updatedNode = computed(() => ({
+        const getNodeSnapshot = () => ({
                 ...props.node,
                 text: text.value,
                 images: fileList.value,
                 event: Object.assign({}, props.node.event, event.value),
                 triggers: triggers.value  
-        }));
+        });
 
         function updateNode() {
-            emit('updateNode', updatedNode.value)
+            emit('updateNode', getNodeSnapshot());
         }
 
         function addAction() {
             const trigger = { text: newActionText.value };
             triggers.value.push(trigger)
-            emit('addTrigger', updatedNode.value)
+            emit('addTrigger', getNodeSnapshot())
             newActionText.value = null;
             showActionPopover.value = false;
         }
@@ -232,6 +238,7 @@ export default defineComponent({
         return {
             newActionText,
             newEventText,
+            patchedTriggerText,
             triggers,
             text,
             addAction,
@@ -243,7 +250,7 @@ export default defineComponent({
             showEventPopover,
             onAddFile: ({ file }) => {
                 fileList.value.push({ status: 'finished', isUploaded: false, id: file.id, name: file.name, file: file.file, url: file.url });
-                if (!props.node.images.some(({ id }) => id === file.id)) updateNode()
+                updateNode()
             },
             onRemoveFile: ({ file }) => {
                 const pos = fileList.value.findIndex((item) => item.id === file.id)
