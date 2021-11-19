@@ -81,7 +81,7 @@ export default defineComponent({
         const redirectByBotListState = async () => {
             if (store.state.bots.botList.length) {
                 await store.dispatch('getFullBotDataById', store.state.bots.botList[0].id);
-                router.push({ name: ROUTER.ROUTE_NAMES.BOT });
+                router.push({ name: ROUTER.ROUTE_NAMES.SCENARIO });
             } else {
                 router.push({ name: ROUTER.ROUTE_NAMES.BUILDER });
             }

@@ -41,18 +41,14 @@
 <script>
 import { h, defineComponent, ref, computed, watch } from 'vue'
 import { NTag, NButton, NDataTable, NEmpty, NPopselect, NCollapseTransition } from 'naive-ui'
-import BotoInboxDialogModal from './dialog/DialogModal.vue';
-import BotoMessageInput from './dialog/Message.vue';
+import BotoInboxDialogModal from '../dialogs/dialog/DialogModal.vue';
+import BotoMessageInput from '../dialogs/dialog/Message.vue';
 import { useStore } from 'vuex';
 
 const createColumns = ({ onAction }) => {
   return [
     {
       type: 'selection',
-    },
-    {
-      title: 'ID Чата',
-      key: 'id'
     },
     {
       title: 'Последнее Сообщение',
@@ -77,7 +73,8 @@ const createColumns = ({ onAction }) => {
             default: () => `${event.value}${event.label ? `: ${event.label}` : ''}`
           }
         )) : '-';
-      }
+      },
+      width: 250
     },
     {
       title: 'Действия',

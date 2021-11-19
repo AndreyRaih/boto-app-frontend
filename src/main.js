@@ -6,8 +6,6 @@ import router from './router'
 import store from './store'
 import firebase from "firebase";
 import './styles/main.stylus';
-import mitt from 'mitt';
-const emitter = mitt();
 
 const firebaseConfig = {
     apiKey: "AIzaSyC34zmQa3R0mWoIslxnxTeyp0l5ppATx2w",
@@ -21,5 +19,4 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig)
 
 const app = createApp(App);
-app.config.globalProperties.emitter = emitter;
 app.use(store).use(router).use(createMetaManager()).mount('#app')

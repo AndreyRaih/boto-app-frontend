@@ -5,8 +5,8 @@
 
 <script>
 import { defineComponent, onMounted, ref } from "vue";
-import BotoScenarioEditor from "@/components/dashboard/scenario/Builder.vue"
-import BotoLoader from "@/components/dashboard/Loader.vue";
+import BotoScenarioEditor from "@/components/scenario/Builder.vue"
+import BotoLoader from "@/components/shared/Loader.vue";
 import { useStore } from 'vuex';
 
 export default defineComponent({

@@ -22,9 +22,9 @@
 
 <script>
 import { computed, defineComponent } from 'vue'
-import BotoBotHeader from "@/components/dashboard/bot/Header.vue";
-import BotoBotStatistic from "@/components/dashboard/bot/StatisticMain.vue";
-import BotoLoader from "@/components/dashboard/Loader.vue";
+import BotoBotHeader from "@/components/analytic/Header.vue";
+import BotoBotStatistic from "@/components/analytic/StatisticMain.vue";
+import BotoLoader from "@/components/shared/Loader.vue";
 import { NDivider, useDialog } from "naive-ui";
 import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';

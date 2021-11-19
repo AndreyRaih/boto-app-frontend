@@ -3,8 +3,8 @@
         <n-list>
             <n-list-item>
                 <n-text>
-                    Перейдите к даилогу к
-                    <n-a href="https://t.me/botfather" target="_blank">@BotFather</n-a>и введите команду -
+                    Перейдите к диалогу к 
+                    <n-a href="https://t.me/botfather" target="_blank">@BotFather</n-a> и введите команду -
                     <strong>/newbot</strong>
                 </n-text>
             </n-list-item>
@@ -16,9 +16,11 @@
                 </n-text>
             </n-list-item>
             <n-list-item>
-                <n-text>Скопируйте полученный токен и имя бота, и вставьте в форму ниже.</n-text>
+                <n-text>Скопируйте полученный токен (выделен красным) и имя бота, и вставьте в форму ниже.</n-text>
             </n-list-item>
         </n-list>
+
+      <img :class="$style.img" src="@/assets/example_img.png" />
             <n-input-group>
                 <n-input placeholder="Имя бота" v-model:value="name" @blur="() => validateName()" :style="{ width: '40%' }" />
                 <n-input placeholder="API Токен" v-model:value="token" @blur="() => validateToken()" :style="{ width: '40%' }" />
@@ -30,6 +32,10 @@
 <style lang="stylus" module>
 .card {
   width: 400px;
+}
+.img {
+    width: 100%;
+    height: 200px;
 }
 </style>
 

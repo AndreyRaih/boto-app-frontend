@@ -38,32 +38,27 @@
                 </n-button>
             </n-space>
         </n-space>
-        <n-text>Изображения</n-text>
+        <n-text>Медиа</n-text>
         <n-upload
             :key="fileList ? fileList.length : 0"
             :default-file-list="fileList"
-            accept="image/*"
+            accept="image/*, video/mp4"
             list-type="image-card"
             @before-upload="onAddFile"
             @remove="onRemoveFile"
         >Upload</n-upload>
         <n-divider />
         <n-text>Текст</n-text>
-        <n-input
-            type="textarea"
+        <boto-editable-input 
             placeholder="Введите текст сообщения"
             v-model:value="text"
-            @blur="updateNode"
-            clearable
-            :autosize="{
-                minRows: 1
-            }"
+            @blur="updateNode" 
         />
         <n-text :depth="3">Доступные действия:</n-text>
         <div class="boto-node__actions">
-            <n-popover v-for="trigger in triggers" :key="trigger.text" trigger="manual" :show="trigger.visible" raw>
+            <n-popover v-for="trigger in triggers" :key="trigger.text" trigger="click" raw>
                 <template #trigger>
-                    <n-button @click="trigger.visible = !trigger.visible" >{{ trigger.text }}</n-button>
+                    <n-button @click="trigger.visible = !trigger.visible" ghost color="#396182">{{ trigger.text }}</n-button>
                 </template>
                 <n-input-group class="boto-node__action-create-form">
                     <n-input
@@ -80,12 +75,12 @@
                         }"
                         :style="{ width: '75%' }"
                     />
-                    <n-button :disabled="!trigger.text" size="small" type="primary" @click="updateNode">Добавить</n-button>
+                    <n-button :disabled="!trigger.text" size="small" color="#396182" @click="updateNode">Добавить</n-button>
                 </n-input-group>
             </n-popover>
-            <n-popover trigger="manual" :show="showActionPopover" raw>
+            <n-popover trigger="click" raw>
                 <template #trigger>
-                    <n-button @click="showActionPopover = !showActionPopover" dashed>Добавить</n-button>
+                    <n-button @click="showActionPopover = !showActionPopover" color="#396182" dashed>Добавить</n-button>
                 </template>
                 <n-input-group class="boto-node__action-create-form">
                     <n-input
@@ -97,7 +92,7 @@
                         @keyup.enter="addAction"
                         :style="{ width: '75%' }"
                     />
-                    <n-button :disabled="!newActionText || newActionText.length < 3" size="small" type="primary" @click="addAction">Добавить</n-button>
+                    <n-button :disabled="!newActionText || newActionText.length < 3" size="small" color="#396182" @click="addAction">Добавить</n-button>
                 </n-input-group>
             </n-popover>
         </div>
@@ -156,13 +151,14 @@
 import { NUpload, NDivider, NInput, NButton, NH5, NText, NPopover, NInputGroup, NSpace, NIcon } from 'naive-ui'
 import { Trash as TrashIcon, Flare as FlareIcon } from "@vicons/tabler"
 import { defineComponent, ref, onMounted, onUnmounted } from 'vue'
+import BotoEditableInput from '@/components/shared/EditableInput.vue';
 var emitter = require('tiny-emitter/instance');
 
 export const BOTO_SCENARIO_BUILDER_DELETE_NODE_EVENT = 'BOTO-BUILDER:NODE-REMOVE'
 
 export default defineComponent({
     components: {
-        NUpload, NDivider, NInput, NButton, NPopover, NH5, NText, NInputGroup, NSpace, NIcon, TrashIcon, FlareIcon
+        NUpload, NDivider, NInput, NButton, NPopover, NH5, NText, NInputGroup, NSpace, NIcon, TrashIcon, FlareIcon, BotoEditableInput
     },
     props: {
         node: {
@@ -185,13 +181,7 @@ export default defineComponent({
                 visible: false
             })
         ));
-        const fileList = ref(props.node.images ? props.node.images.map((image) => {
-            if (typeof image === 'string') {
-                return { status: 'finished', isUploaded: true, id: image, name: image, file: null, url: image }
-            } else {
-                return image;
-            }
-        }) : []);
+        const fileList = ref(props.node.media ? props.node.media.map((image) => ({ status: 'finished', isUploaded: true, id: image, name: image.url, file: null, url: image.url, type: image.type })) : []);
         const newActionText = ref(null);
         const patchedTriggerText = ref(null);
         const newEventText = ref(null);
@@ -208,7 +198,7 @@ export default defineComponent({
         const getNodeSnapshot = () => ({
                 ...props.node,
                 text: text.value,
-                images: fileList.value,
+                media: fileList.value,
                 event: Object.assign({}, props.node.event, event.value),
                 triggers: triggers.value  
         });
@@ -249,7 +239,7 @@ export default defineComponent({
             showActionPopover,
             showEventPopover,
             onAddFile: ({ file }) => {
-                fileList.value.push({ status: 'finished', isUploaded: false, id: file.id, name: file.name, file: file.file, url: file.url });
+                fileList.value.push({ status: 'finished', isUploaded: false, id: file.id, name: file.name, file: file.file, url: file.url, type: file.type });
                 updateNode()
             },
             onRemoveFile: ({ file }) => {

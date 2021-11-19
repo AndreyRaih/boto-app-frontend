@@ -29,11 +29,11 @@ export default defineComponent({
     setup() {
         const router = useRouter();
         const route = useRoute();
-        const changeRoute = (key) => router.push({ path: key })
-        const currentRoute = ref(route.path);
+        const changeRoute = (key, { value }) => router.push(value)
+        const currentRoute = ref(route.fullPath);
 
         watch(
-            () => route.path,
+            () => route.fullPath,
             (url) => {
                 currentRoute.value = url;
             }

@@ -1,5 +1,5 @@
 import httpClient from "@/common/httpClient";
-import firebase from "firebase";
+import BotoMediaUploader from "@/common/mediaUploader";
 
 let requestQueueInterval = null;
 
@@ -86,29 +86,9 @@ export default {
         }, updates) {
             const data = [...updates];
             const stages = [];
-            const _getUrlsList = async (images = []) => {
-                const imagesUrls = [];
-                if (images.length > 0) {
-                    const storage = firebase.storage();
-                    for (let image of images) {
-                        let url = null;
-                        if (typeof image === 'string') {
-                            url = image;
-                        } else if (image.isUploaded) {
-                            url = image.name
-                        } else {
-                            const storageRef = storage.ref(`${getters.userId}/${image.id}`);
-                            await storageRef.put(image.file)
-                            url = await storageRef.getDownloadURL();
-                        }
-                        imagesUrls.push(url);
-                    }
-                }
-                return imagesUrls;
-            };
-
             for (const stage of data) {
-                stage.images = await _getUrlsList(Array.isArray(stage.images) ? [...stage.images] : [])
+                const mediaUploader = new BotoMediaUploader(getters.userId, Array.isArray(stage.media) ? [...stage.media] : []);
+                stage.media = await mediaUploader.getMediaList();
                 stages.push(stage);
             }
             commit('ADD_REQUEST_TO_QUEUE', {

@@ -9,7 +9,7 @@
   </login-layout>
 </template>
 
-<script lang="ts">
+<script>
 import { defineComponent, onBeforeMount } from 'vue'
 import LoginLayout from '@/components/login/Layout.vue';
 import LoginForm from '@/components/login/Form.vue';

@@ -22,7 +22,7 @@
     margin-left: 20px
 </style>
 
-<script lang="ts">
+<script>
 import { computed, defineComponent } from 'vue'
 import BotoDashboardLayout from '@/components/dashboard/Layout.vue';
 import { defaultMenu } from "../../common/sidebar.js";

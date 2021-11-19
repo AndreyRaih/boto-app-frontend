@@ -13,12 +13,12 @@ const routes = [
       {
         path: ROUTER.ROUTE_PATHS.BOT,
         name: ROUTER.ROUTE_NAMES.BOT,
-        component: () => import(`../views/dashboard/views/Bot.vue`)
+        component: () => import(`../views/dashboard/views/Analytic.vue`)
       },
       {
         path: ROUTER.ROUTE_PATHS.BUILDER,
         name: ROUTER.ROUTE_NAMES.BUILDER,
-        component: () => import(`../views/dashboard/views/Builder.vue`)
+        component: () => import(`../views/CreateBotForm.vue`)
       },
       {
         path: ROUTER.ROUTE_PATHS.SCENARIO,

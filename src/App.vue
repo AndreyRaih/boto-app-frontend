@@ -20,7 +20,7 @@ import { useStore } from 'vuex';
 import { useMeta } from "vue-meta";
 import { ROUTER } from './common/constants';
 import BotoLocalStorageManager from './common/localStorageManager';
-import BotoLoader from './components/dashboard/Loader.vue';
+import BotoLoader from './components/dashboard/shared/Loader.vue';
 
 export default defineComponent({
   name: "BotoApp",
@@ -50,7 +50,7 @@ export default defineComponent({
         .then(() => {
           if (store.state.bots.botList.length) {
             store.dispatch('getFullBotDataById', store.state.bots.botList[0].id);
-            router.push({ name: ROUTER.ROUTE_NAMES.BOT });
+            router.push({ name: ROUTER.ROUTE_NAMES.SCENARIO });
           } else {
             router.push({ name: ROUTER.ROUTE_NAMES.BUILDER });
           }
@@ -65,6 +65,7 @@ export default defineComponent({
     return {
       isLoaded,
       themeOverrides: {
+        
         common: {
           primaryColor: '#396182',
           primaryColorHover: '#6B88A1',

@@ -21,7 +21,7 @@ import { defineComponent, ref } from 'vue'
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { ROUTER } from '@/common/constants';
-import BotoCreateBotForm from '@/components/dashboard/bot/CreateForm.vue';
+import BotoCreateBotForm from '@/components/createBotForm/CreateForm.vue';
 
 export default defineComponent({
   name: "BotoBuilderMainView",
@@ -42,7 +42,7 @@ export default defineComponent({
         data[field.key] = field.value
       }
       store.dispatch('createBot', data)
-        .then(() => router.push({ name: ROUTER.ROUTE_NAMES.BOT, params: { id: store.state.bots.currentBot.id } }))
+        .then(() => router.push({ name: ROUTER.ROUTE_NAMES.SCENARIO }))
         .finally(() => loading.value = false)
     }
 

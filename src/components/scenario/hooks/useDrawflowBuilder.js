@@ -32,6 +32,7 @@ export default function useDrawflowBuilder() {
     function start() {
         const id = document.getElementById("boto-drawflow")
         editor.value = new Drawflow(id, Vue);
+        editor.value.draggable_inputs = false;
         editor.value.start();
     }
 

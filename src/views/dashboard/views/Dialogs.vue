@@ -10,8 +10,8 @@
 <script>
 import { defineComponent, onMounted, ref } from "vue";
 import { NH1, NDivider } from "naive-ui";
-import BotoDialogsTable from "@/components/dashboard/dialogs/Table.vue";
-import BotoLoader from "@/components/dashboard/Loader.vue";
+import BotoDialogsTable from "@/components/dialogs/Table.vue";
+import BotoLoader from "@/components/shared/Loader.vue";
 import { useStore } from "vuex";
 
 export default defineComponent({

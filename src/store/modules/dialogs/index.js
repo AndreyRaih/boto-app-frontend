@@ -1,4 +1,5 @@
 import httpClient from "@/common/httpClient";
+import BotoMediaUploader from "@/common/mediaUploader";
 
 export default  {
     state: {
@@ -20,7 +21,13 @@ export default  {
         getDialogById({ commit }, id) {
             return httpClient.get(`/admin/dialogs/${id}`).then(({ data }) => commit('SET_CURRENT_DIALOG', data))
         },
-        sendMessageToDialog(ctx, data) {
+        async sendMessageToDialog({ getters }, data) {
+            data.message.triggers = []
+            if (data.message.media.length) {
+                const uploader = new BotoMediaUploader(getters.userId, data.message.media);
+                data.message.media = await uploader.getMediaList();
+            }
+            debugger;
             return httpClient.post(`/interaction/send_message`, data);
         },
     }

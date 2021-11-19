@@ -2,20 +2,6 @@
     <div class="boto-drawflow-container">
         <div id="boto-drawflow"></div>
         <div class="boto-drawflow-controls">
-            <n-popselect
-                trigger="click"
-                :options="options"
-                @update:value="onSelectModule"
-                placement="left-start"
-            >
-                <n-button circle>
-                    <template #icon>
-                        <n-icon>
-                            <apps />
-                        </n-icon>
-                    </template>
-                </n-button>
-            </n-popselect>
             <n-button @click="onZoomIn" circle>
                 <template #icon>
                     <n-icon>
@@ -37,24 +23,27 @@
 <script>
 import { defineComponent, onMounted, onUnmounted, watch, reactive } from "vue";
 import "drawflow/dist/drawflow.min.css";
-import { NButton, NIcon, NPopselect, useMessage } from "naive-ui";
-import { Minus, Plus, Apps } from "@vicons/tabler"
+import { NButton, NIcon, useMessage } from "naive-ui";
+import { Minus, Plus } from "@vicons/tabler"
 import { useStore } from 'vuex';
 import useDrawflowBuilder from './hooks/useDrawflowBuilder';
 import useBuiltInPatterns from './hooks/useBuiltInPatterns';
+import { useRoute } from "vue-router";
 
 export default defineComponent({
     name: "BotoScenarioVisualEditor",
-    components: { NButton, NIcon, NPopselect, Minus, Plus, Apps },
+    components: { NButton, NIcon, Minus, Plus },
     setup() {
         const store = useStore();
         const messages = useMessage();
+        const route = useRoute();
         let messageReactive = reactive(null)
 
         const drawflow = useDrawflowBuilder();
         const builtInPatterns = useBuiltInPatterns()
 
         watch(() => store.state.scenarios.editInProgress, handleIndicatorState)
+        watch(() => route.query, (value) => value && value.module && onSelectModule(value.module))
 
         onMounted(start)
         onUnmounted(stop)
@@ -83,6 +72,10 @@ export default defineComponent({
         }
 
         function stop() {
+            if (messageReactive) {
+                messageReactive.destroy()
+                messageReactive = null
+            }
             drawflow.clear()
             store.dispatch('stopSync')
         }
@@ -101,22 +94,7 @@ export default defineComponent({
 
         return {
             onZoomIn: () => drawflow.zoomIn(),
-            onZoomOut: () => drawflow.zoomOut(),
-            onSelectModule,
-            options: [
-                {
-                    label: 'Сегментация',
-                    value: 'add_segment',
-                },
-                {
-                    label: 'Автоворонка',
-                    value: 'new_funnel',
-                },
-                {
-                    label: 'Квиз',
-                    value: 'new_quize',
-                },
-            ]
+            onZoomOut: () => drawflow.zoomOut()
         }
     }
 })
